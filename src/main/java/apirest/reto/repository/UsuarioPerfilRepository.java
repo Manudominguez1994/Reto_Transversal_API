@@ -5,4 +5,6 @@ import apirest.reto.model.entity.UsuarioPerfil;
 
 public interface UsuarioPerfilRepository extends JpaRepository<UsuarioPerfil, Integer>{
 
+	UsuarioPerfil findFirstByUsuario_Username(String username);
+
 }

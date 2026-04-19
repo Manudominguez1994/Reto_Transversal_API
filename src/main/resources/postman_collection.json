@@ -1,0 +1,444 @@
+{
+  "info": {
+    "name": "API Cine - Reto Transversal",
+    "description": "Coleccion de pruebas para la API del reto transversal. Hacer login primero y guardar el token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8095/api"
+    },
+    {
+      "key": "token",
+      "value": "pegar_aqui_el_token_del_login"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login admin (manuel)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manuel@cine.com\",\n  \"password\": \"1234\"\n}"
+            },
+            "description": "Devuelve token, username y rol. Copiar el token y pegarlo en la variable 'token'."
+          }
+        },
+        {
+          "name": "Login cliente (ana_g)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@cine.com\",\n  \"password\": \"1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login - password incorrecta (da 401)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manuel@cine.com\",\n  \"password\": \"mal\"\n}"
+            },
+            "description": "Debe devolver 401"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Usuarios",
+      "item": [
+        {
+          "name": "Registro publico",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/usuarios/registro",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nuevo_user\",\n  \"password\": \"1234\",\n  \"email\": \"nuevo@test.com\",\n  \"nombre\": \"Nuevo\",\n  \"apellidos\": \"Usuario Test\",\n  \"direccion\": \"Calle Test 1\"\n}"
+            },
+            "description": "No necesita token. Devuelve 201 si va bien, 409 si el username ya existe."
+          }
+        },
+        {
+          "name": "Registro - username repetido (da 409)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/usuarios/registro",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ana_g\",\n  \"password\": \"1234\",\n  \"email\": \"otra@test.com\",\n  \"nombre\": \"Ana\",\n  \"apellidos\": \"Repetida\",\n  \"direccion\": \"Calle 1\"\n}"
+            },
+            "description": "Debe devolver 409 porque ana_g ya existe"
+          }
+        },
+        {
+          "name": "Listar todos (admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por username",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/ana_g"
+          }
+        },
+        {
+          "name": "Eliminar usuario (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/usuarios/eliminar/nuevo_user",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Elimina el usuario creado antes en el registro"
+          }
+        },
+        {
+          "name": "Eliminar sin token (da 403)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/usuarios/eliminar/nuevo_user",
+            "description": "Sin token debe devolver 403"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Eventos",
+      "item": [
+        {
+          "name": "Listar todos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos"
+          }
+        },
+        {
+          "name": "Paginado (pagina 0, 5 por pagina)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/eventos/paginado?page=0&size=5",
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/1"
+          }
+        },
+        {
+          "name": "Buscar por id que no existe (da 404)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/9999",
+            "description": "Debe devolver 404"
+          }
+        },
+        {
+          "name": "Activos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/por-estado-activo"
+          }
+        },
+        {
+          "name": "Destacados",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/destacados"
+          }
+        },
+        {
+          "name": "Cancelados",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/cancelados"
+          }
+        },
+        {
+          "name": "Terminados",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/terminados"
+          }
+        },
+        {
+          "name": "Por tipo",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/tipo/1"
+          }
+        },
+        {
+          "name": "Buscar por nombre",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/eventos/por-nombre/cine"
+          }
+        },
+        {
+          "name": "Alta evento activo (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/eventos/alta-activo",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": { \"idTipo\": 1 },\n  \"nombre\": \"Evento de prueba\",\n  \"descripcion\": \"Descripcion del evento\",\n  \"fechaInicio\": \"2026-12-01\",\n  \"duracion\": 120,\n  \"direccion\": \"Cine Gran Via, Sala 5\",\n  \"destacado\": \"N\",\n  \"aforoMaximo\": 100,\n  \"minimoAsistencia\": 10,\n  \"precio\": 8.50\n}"
+            },
+            "description": "Necesita token de admin. El estado se pone ACTIVO automaticamente."
+          }
+        },
+        {
+          "name": "Editar evento (admin)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/eventos/editar/1",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": { \"idTipo\": 1 },\n  \"nombre\": \"Evento editado\",\n  \"descripcion\": \"Nueva descripcion\",\n  \"fechaInicio\": \"2026-12-10\",\n  \"duracion\": 150,\n  \"direccion\": \"Cine Gran Via, Sala 1\",\n  \"estado\": \"ACTIVO\",\n  \"destacado\": \"S\",\n  \"aforoMaximo\": 200,\n  \"minimoAsistencia\": 20,\n  \"precio\": 9.00\n}"
+            }
+          }
+        },
+        {
+          "name": "Cancelar evento (admin)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/eventos/cancelar/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        },
+        {
+          "name": "Cancelar evento sin token (da 403)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/eventos/cancelar/1",
+            "description": "Sin token debe devolver 403"
+          }
+        },
+        {
+          "name": "Eliminar evento (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/eventos/eliminar/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Reservas",
+      "item": [
+        {
+          "name": "Listar todas",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reservas"
+          }
+        },
+        {
+          "name": "Reservas de un usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reservas/por-usuario/ana_g"
+          }
+        },
+        {
+          "name": "Reservas activas de un usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reservas/por-usuario-activo/ana_g"
+          }
+        },
+        {
+          "name": "Reservas de un evento",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reservas/por-evento/1"
+          }
+        },
+        {
+          "name": "Hacer reserva (logado)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=2&observaciones=Butacas en el centro",
+              "query": [
+                { "key": "username", "value": "ana_g" },
+                { "key": "cantidad", "value": "2" },
+                { "key": "observaciones", "value": "Butacas en el centro" }
+              ]
+            },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Necesita token. Si no hay token devuelve 401."
+          }
+        },
+        {
+          "name": "Hacer reserva sin token (da 401)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=2",
+              "query": [
+                { "key": "username", "value": "ana_g" },
+                { "key": "cantidad", "value": "2" }
+              ]
+            },
+            "description": "Sin token debe devolver 401"
+          }
+        },
+        {
+          "name": "Hacer reserva - cantidad mayor a 10 (da 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=15",
+              "query": [
+                { "key": "username", "value": "ana_g" },
+                { "key": "cantidad", "value": "15" }
+              ]
+            },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Debe devolver 400 con mensaje de error"
+          }
+        },
+        {
+          "name": "Cancelar reserva (logado)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/reservas/cancelar/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Necesita token. Si no hay token devuelve 401."
+          }
+        },
+        {
+          "name": "Cancelar reserva sin token (da 401)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/reservas/cancelar/1",
+            "description": "Sin token debe devolver 401"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Tipos",
+      "item": [
+        {
+          "name": "Listar todos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tipos"
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tipos/1"
+          }
+        },
+        {
+          "name": "Alta tipo (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/tipos/alta",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Terror\",\n  \"descripcion\": \"Peliculas de terror\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar tipo (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/tipos/eliminar/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Perfiles",
+      "item": [
+        {
+          "name": "Listar todos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/perfiles"
+          }
+        },
+        {
+          "name": "Buscar por id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/perfiles/1"
+          }
+        }
+      ]
+    }
+  ]
+}

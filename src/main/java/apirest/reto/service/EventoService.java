@@ -70,4 +70,7 @@ public interface EventoService {
 	
 	//Obtener todos los eventos destacados
 	List<Evento> buscarEventosDestacados();
+
+	// Pasa a TERMINADO todos los eventos ACTIVOS cuya fecha de inicio ya ha pasado
+	void terminarEventosPasados();
 }

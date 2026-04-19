@@ -28,4 +28,7 @@ public interface UsuarioService {
 	//usuarios con más de N reservas.
 	List<Usuario> buscarUsuariosConMasDeNReservas(int n);
 
+	// Registra un nuevo usuario y le asigna automaticamente el rol ROLE_CLIENTE
+	Usuario registrar(Usuario usuario);
+
 }

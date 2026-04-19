@@ -4,7 +4,11 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import apirest.reto.model.entity.Perfil;
 import apirest.reto.model.entity.Usuario;
+import apirest.reto.model.entity.UsuarioPerfil;
+import apirest.reto.repository.PerfilRepository;
+import apirest.reto.repository.UsuarioPerfilRepository;
 import apirest.reto.repository.UsuarioRepository;
 
 @Service
@@ -12,6 +16,12 @@ public class UsuarioServiceImpl implements UsuarioService{
 	
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+
+	@Autowired
+	private PerfilRepository perfilRepository;
+
+	@Autowired
+	private UsuarioPerfilRepository usuarioPerfilRepository;
 
 	@Override
 	public List<Usuario> findAll() {
@@ -51,19 +61,19 @@ public class UsuarioServiceImpl implements UsuarioService{
 		}
 	}
 
-	//“Buscar usuarios cuyo email contenga un texto específico”
+	//"Buscar usuarios cuyo email contenga un texto específico"
 	@Override
 	public List<Usuario> buscarPorEmail(String texto) {
 		return usuarioRepository.findByEmailContaining(texto);
 	}
 
-	//“usuarios que se registraron después de una fecha”
+	//"usuarios que se registraron después de una fecha"
 	@Override
 	public List<Usuario> buscarRegistradosDespuesDe(LocalDate fechaRegistro) {
 		return usuarioRepository.findByFechaRegistroAfter(fechaRegistro);
 	}
 
-	//“usuarios que hayan realizado alguna reserva”
+	//"usuarios que hayan realizado alguna reserva"
 	@Override
 	public List<Usuario> buscarUsuariosConAlgunaReserva() {
 		return usuarioRepository.buscarUsuariosConAlgunaReserva();
@@ -72,6 +82,31 @@ public class UsuarioServiceImpl implements UsuarioService{
 	@Override
 	public List<Usuario> buscarUsuariosConMasDeNReservas(int n) {
 		return usuarioRepository.buscarUsuariosConMasDeNReservas(n);
+	}
+
+	@Override
+	public Usuario registrar(Usuario usuario) {
+
+		if (usuarioRepository.existsById(usuario.getUsername())) {
+			return null;
+		}
+
+		usuario.setFechaRegistro(LocalDate.now());
+		usuario.setEnabled(1);
+
+		Usuario guardado = usuarioRepository.save(usuario);
+
+		// le asignamos el perfil ROLE_CLIENTE (id = 2)
+		Perfil perfilCliente = perfilRepository.findById(2).orElse(null);
+
+		if (perfilCliente != null) {
+			UsuarioPerfil up = new UsuarioPerfil();
+			up.setUsuario(guardado);
+			up.setPerfil(perfilCliente);
+			usuarioPerfilRepository.save(up);
+		}
+
+		return guardado;
 	}
 	
 }

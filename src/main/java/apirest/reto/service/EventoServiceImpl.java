@@ -1,9 +1,11 @@
 package apirest.reto.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import apirest.reto.model.entity.Evento;
 import apirest.reto.model.entity.Evento.Destacado;
@@ -170,8 +172,17 @@ public class EventoServiceImpl implements EventoService{
 	public List<Evento> buscarEventosPorEstadoCancelado() {
 		return eventoRepository.findByEstado(Estado.CANCELADO);
 	}
-	
-	
 
+	@Scheduled(cron = "0 0 0 * * *")
+	@Override
+	public void terminarEventosPasados() {
+		List<Evento> eventosActivos = eventoRepository.findByEstado(Estado.ACTIVO);
+		for (Evento evento : eventosActivos) {
+			if (evento.getFechaInicio().isBefore(LocalDate.now())) {
+				evento.setEstado(Estado.TERMINADO);
+				eventoRepository.save(evento);
+			}
+		}
+	}
 
 }

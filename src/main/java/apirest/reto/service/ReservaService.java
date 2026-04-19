@@ -15,25 +15,29 @@ public interface ReservaService {
 	
 	int deleteById(int idReserva);
 	
-	//“reservas de un usuario”
+	//"reservas de un usuario"
 	List<Reserva> buscarReservasPorUsuario(String username);
 	
-	//“reservas de un usuario con un evento activo”
+	//"reservas de un usuario con un evento activo"
 	List<Reserva> buscarPorUsuarioConEventoActivo(String username);
 	
-	//“listar las reservas de un evento”
+	//"listar las reservas de un evento"
 	List<Reserva> buscarPorEvento(int idEvento);
 	
-	//“reservas por nombre del tipo de evento”
+	//"reservas por nombre del tipo de evento"
 	List<Reserva> buscarPorNombreDeTipoDeEvento(String nombre);
 	
-	//“Reservas de usuarios con un perfil concreto”
+	//"Reservas de usuarios con un perfil concreto"
 	List<Reserva> buscarPorUsuariosConUnPerfilConcreto(int idPerfil);
 	
-	//“reservas de un usuario con evento activo en el último mes”
+	//"reservas de un usuario con evento activo en el último mes"
 	List<Reserva> buscarPorUsuarioConEventoActivoEnElUltimoMes(String username);
 	
-	// “Mostrar la suma total de entradas reservadas por usuario en eventos activos”
+	// "Mostrar la suma total de entradas reservadas por usuario en eventos activos"
 	List<Object[]> calcularCantidadTotalReservadaPorUsuarioEnEventosActivos();
-	
+
+	// Hace una reserva con todas las validaciones de negocio.
+	// Devuelve "ok" si todo fue bien, o el mensaje de error si algo falla.
+	String hacerReserva(int idEvento, String username, int cantidad, String observaciones);
+
 }

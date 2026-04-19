@@ -11,21 +11,37 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import apirest.reto.config.JwtUtil;
 import apirest.reto.model.dto.UsuarioDto;
 import apirest.reto.model.entity.Usuario;
 import apirest.reto.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name = "Usuarios", description = "Gestión de usuarios y registro")
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioRestController {
 	
 	@Autowired
 	private UsuarioService usuarioService;
-	
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	private boolean esAdmin(String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) return false;
+		String token = authHeader.substring(7);
+		if (!jwtUtil.esTokenValido(token)) return false;
+		return "ROLE_ADMON".equals(jwtUtil.obtenerRol(token));
+	}
+
+	@Operation(summary = "Listar todos los usuarios")
 	@GetMapping("")
 	public ResponseEntity<List<UsuarioDto>> findAll() {
 		List<UsuarioDto> usuarios = usuarioService.findAll()
@@ -46,20 +62,47 @@ public class UsuarioRestController {
 			return ResponseEntity.ok(UsuarioDto.convertirAUsuarioDto(usuario));
 		}
 	}
-	
+
+	@Operation(summary = "Registro público de usuario", description = "Cualquiera puede registrarse. Se asigna ROLE_CLIENTE automáticamente.")
+	// registro público - se le asigna ROLE_CLIENTE automaticamente
+	@PostMapping("/registro")
+	public ResponseEntity<?> registro(@Valid @RequestBody Usuario usuario){
+		Usuario nuevoUsuario = usuarioService.registrar(usuario);
+
+		if(nuevoUsuario == null) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("El username ya esta en uso");
+		}else {
+			return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioDto.convertirAUsuarioDto(nuevoUsuario));
+		}
+	}
+
 	@PostMapping("/alta")
-	public ResponseEntity<UsuarioDto> insertOne(@Valid @RequestBody Usuario usuario){
+	public ResponseEntity<?> insertOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@Valid @RequestBody Usuario usuario){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Usuario nuevoUsuario = usuarioService.insertOne(usuario);
 		
 		if(nuevoUsuario == null) {
-			return ResponseEntity.badRequest().build();
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("El username ya esta en uso");
 		}else {
 			return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioDto.convertirAUsuarioDto(nuevoUsuario));
 		}
 	}
 	
 	@PutMapping("/actualizar")
-	public ResponseEntity<UsuarioDto> updateOne(@Valid @RequestBody Usuario usuario){
+	public ResponseEntity<?> updateOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@Valid @RequestBody Usuario usuario){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Usuario usuarioActualizado = usuarioService.updateOne(usuario);
 		
 		if(usuarioActualizado == null) {
@@ -70,7 +113,14 @@ public class UsuarioRestController {
 	}
 	
 	@DeleteMapping("/eliminar/{username}")
-	public ResponseEntity<Void> deleteById(@PathVariable String username){
+	public ResponseEntity<?> deleteById(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable String username){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		int resultado = usuarioService.deleteById(username);
 		
 		if(resultado == 1) {
@@ -80,9 +130,7 @@ public class UsuarioRestController {
 		}
 	}
 	
-	// --------------------------------------------------------------------- //
-	
-	//“Buscar usuarios cuyo email contenga un texto específico”
+	//"Buscar usuarios cuyo email contenga un texto específico"
 	@GetMapping("/email/{texto}")
 	public ResponseEntity<List<UsuarioDto>> buscarPorEmail(@PathVariable String texto){
 		List<UsuarioDto> usuarios = usuarioService.buscarPorEmail(texto)
@@ -93,7 +141,7 @@ public class UsuarioRestController {
 		return ResponseEntity.ok(usuarios);
 	}
 	
-	//“usuarios que se registraron después de una fecha”
+	//"usuarios que se registraron después de una fecha"
 	@GetMapping("/fecha/{fechaRegistro}")
 	public ResponseEntity<List<UsuarioDto>> buscarRegistradosDespuesDe(@PathVariable LocalDate fechaRegistro){
 		List<UsuarioDto> usuarios = usuarioService.buscarRegistradosDespuesDe(fechaRegistro)
@@ -104,7 +152,7 @@ public class UsuarioRestController {
 		return ResponseEntity.ok(usuarios);
 	}
 	
-	//“usuarios que hayan realizado alguna reserva”
+	//"usuarios que hayan realizado alguna reserva"
 	@GetMapping("/con-reserva")
 	public ResponseEntity<List<UsuarioDto>> buscarUsuariosConAlgunaReserva(){
 		List<UsuarioDto> usuarios = usuarioService.buscarUsuariosConAlgunaReserva()

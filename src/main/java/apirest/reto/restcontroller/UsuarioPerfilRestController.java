@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import apirest.reto.config.JwtUtil;
 import apirest.reto.model.dto.UsuarioPerfilDto;
 import apirest.reto.model.entity.UsuarioPerfil;
 import apirest.reto.service.UsuarioPerfilService;
@@ -22,7 +24,17 @@ public class UsuarioPerfilRestController {
 	
 	@Autowired
 	private UsuarioPerfilService upService;
-	
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	private boolean esAdmin(String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) return false;
+		String token = authHeader.substring(7);
+		if (!jwtUtil.esTokenValido(token)) return false;
+		return "ROLE_ADMON".equals(jwtUtil.obtenerRol(token));
+	}
+
 	@GetMapping("")
 	public ResponseEntity<List<UsuarioPerfilDto>> findAll() {
 		List<UsuarioPerfilDto> usuarioPerfiles = upService.findAll()
@@ -45,7 +57,14 @@ public class UsuarioPerfilRestController {
 	}
 	
 	@PostMapping("/alta")
-	public ResponseEntity<UsuarioPerfilDto> insertOne(@RequestBody UsuarioPerfil usuarioPerfil){
+	public ResponseEntity<?> insertOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@RequestBody UsuarioPerfil usuarioPerfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		UsuarioPerfil nuevoUP = upService.insertOne(usuarioPerfil);
 		
 		if(nuevoUP == null) {
@@ -56,7 +75,14 @@ public class UsuarioPerfilRestController {
 	}
 	
 	@PutMapping("/actualizar")
-	public ResponseEntity<UsuarioPerfilDto> updateOne(@RequestBody UsuarioPerfil usuarioPerfil){
+	public ResponseEntity<?> updateOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@RequestBody UsuarioPerfil usuarioPerfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		UsuarioPerfil upActualizado = upService.updateOne(usuarioPerfil);
 		
 		if(upActualizado == null) {
@@ -67,7 +93,14 @@ public class UsuarioPerfilRestController {
 	}
 	
 	@DeleteMapping("/eliminar/{idUsuarioPerfil}")
-	public ResponseEntity<Void> deleteById(@PathVariable int idUsuarioPerfil){
+	public ResponseEntity<?> deleteById(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable int idUsuarioPerfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		int resultado = upService.deleteById(idUsuarioPerfil);
 		
 		if(resultado == 1) {

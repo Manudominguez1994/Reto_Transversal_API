@@ -12,15 +12,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import apirest.reto.config.JwtUtil;
 import apirest.reto.model.dto.EventoDto;
 import apirest.reto.model.entity.Evento;
 import apirest.reto.model.entity.Evento.Estado;
 import apirest.reto.service.EventoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Eventos", description = "Gestión de eventos del cine")
 @RestController
 @RequestMapping("/eventos")
 public class EventoRestController {
@@ -28,6 +33,17 @@ public class EventoRestController {
 	@Autowired
 	private EventoService eventoService;
 
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	private boolean esAdmin(String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) return false;
+		String token = authHeader.substring(7);
+		if (!jwtUtil.esTokenValido(token)) return false;
+		return "ROLE_ADMON".equals(jwtUtil.obtenerRol(token));
+	}
+
+	@Operation(summary = "Listar todos los eventos")
 	@GetMapping("")
 	public ResponseEntity<List<EventoDto>> findAll() {
 		List<EventoDto> eventos = eventoService.findAll()
@@ -49,6 +65,7 @@ public class EventoRestController {
 		return ResponseEntity.ok(eventos);
 	}
 
+	@Operation(summary = "Buscar evento por id")
 	@GetMapping("/{idEvento}")
 	public ResponseEntity<EventoDto> findById(@PathVariable int idEvento) {
 		Evento evento = eventoService.findById(idEvento);
@@ -61,13 +78,27 @@ public class EventoRestController {
 	}
 
 	@PostMapping("/alta")
-	public ResponseEntity<EventoDto> insertOne(@Valid @RequestBody Evento evento) {
+	public ResponseEntity<?> insertOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@Valid @RequestBody Evento evento) {
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Evento nuevoEvento = eventoService.insertOne(evento);
 		return ResponseEntity.status(HttpStatus.CREATED).body(EventoDto.convertirAEventoDto(nuevoEvento));
 	}
 
 	@PutMapping("/actualizar")
-	public ResponseEntity<EventoDto> updateOne(@Valid @RequestBody Evento evento) {
+	public ResponseEntity<?> updateOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@Valid @RequestBody Evento evento) {
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Evento eventoActualizado = eventoService.updateOne(evento);
 
 		if (eventoActualizado == null) {
@@ -78,7 +109,14 @@ public class EventoRestController {
 	}
 
 	@DeleteMapping("/eliminar/{idEvento}")
-	public ResponseEntity<Void> deleteOne(@PathVariable int idEvento) {
+	public ResponseEntity<?> deleteOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable int idEvento) {
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		int resultado = eventoService.deleteById(idEvento);
 
 		if (resultado == 1) {
@@ -87,29 +125,28 @@ public class EventoRestController {
 			return ResponseEntity.notFound().build();
 		}
 	}
-	
+
 	@GetMapping("/aforo-maximo-menor-de/{cantidad}")
 	public ResponseEntity<List<EventoDto>> buscarPorAforoMaximoMenorQue(@PathVariable int cantidad){
 		List<EventoDto> eventos = eventoService.buscarPorAforoMaximoMenorQue(cantidad)
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventos);
-		
 	}
-	
-	//“eventos de un tipo concreto”
+
+	//"eventos de un tipo concreto"
 	@GetMapping("/tipo/{idTipo}")
 	public ResponseEntity<List<EventoDto>> buscarPorTipo(@PathVariable int idTipo){
 		List<EventoDto> eventos = eventoService.buscarPorTipo(idTipo)
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventos);
 	}
-	
+
 	//eventos con más de N reservas
 	@GetMapping("/con-mas-de-n-reservas/{n}")
 	public ResponseEntity<List<EventoDto>> buscarEventosConMasDeNReservas(@PathVariable int n){
@@ -119,7 +156,7 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(eventos);
 	}
-	
+
 	//"Buscar eventos por nombre que contengan una palabra"
 	@GetMapping("/por-nombre/{palabra}")
 	public ResponseEntity<List<EventoDto>> buscarPorNombreQueContengaUnaPalabra(@PathVariable String palabra){
@@ -127,22 +164,22 @@ public class EventoRestController {
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventos);
 	}
-	
-	//“eventos de un tipo concreto (por nombre del tipo)”
+
+	//"eventos de un tipo concreto (por nombre del tipo)"
 	@GetMapping("/por-nombre-del-tipo/{nombre}")
 	public ResponseEntity<List<EventoDto>> buscarPorNombreDelTipo(@PathVariable String nombre){
 		List<EventoDto> eventos = eventoService.buscarPorNombreDelTipo(nombre)
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventos);
 	}
-	
-	//“obtener todos los eventos con un estado concreto”
+
+	//"obtener todos los eventos con un estado concreto"
 	@GetMapping("/estado/{estado}")
 	public ResponseEntity<List<EventoDto>> buscarPorEstado(@PathVariable Estado estado){
 		List<EventoDto> estados = eventoService.buscarPorEstado(estado)
@@ -151,8 +188,8 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(estados);
 	}
-	
-	//“eventos de un usuario que están activos”
+
+	//"eventos de un usuario que están activos"
 	@GetMapping("/activos-de-un-usuario/{username}")
 	public ResponseEntity<List<EventoDto>> buscarEventosActivosDeUnUsuario(@PathVariable String username){
 		List<EventoDto> eventos = eventoService.buscarEventosActivosDeUnUsuario(username)
@@ -161,27 +198,26 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(eventos);
 	}
-	
-	//“Buscar eventos por nombre, dirección o precio máximo”
+
+	//"Buscar eventos por nombre, dirección o precio máximo"
 	@GetMapping("/por-nombre-o-direccion-o-precio-maximo")
-	public ResponseEntity<List<EventoDto>> buscarPorNombreODireccionOPrecioMaximo(@RequestParam(required=false) String nombre,
-																					@RequestParam(required=false) String direccion,
-																					@RequestParam(required=false) Double precio){
+	public ResponseEntity<List<EventoDto>> buscarPorNombreODireccionOPrecioMaximo(
+			@RequestParam(required=false) String nombre,
+			@RequestParam(required=false) String direccion,
+			@RequestParam(required=false) Double precio){
 		List<EventoDto> eventos = eventoService.buscarPorNombreODireccionOPrecioMaximo(nombre, direccion, precio)
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventos);
 	}
-	
-	// Obtener el número total de eventos agrupados por estado (ACTIVO, TERMINADO, CANCELADO) o
-	// Mostrar cuántos eventos hay en cada estado.
+
 	@GetMapping("/total-por-estado")
 	public ResponseEntity<List<Object[]>> mostrarTotalDeEventosPorEstado(){
 		return ResponseEntity.ok(eventoService.mostrarTotalDeEventosPorEstado());
 	}
-	
+
 	//"Buscar eventos con duración mayor que una cantidad."
 	@GetMapping("/duracion-mayor-que/{duracion}")
 	public ResponseEntity<List<EventoDto>> buscarPorDuracionMayorQueUnaCantidad(@PathVariable int duracion){
@@ -191,38 +227,60 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(eventos);
 	}
-	
-	//"Dar de alta un evento poniendo por defecto estado = ACTIVO"
+
+	@Operation(summary = "Dar de alta un evento (queda ACTIVO)", description = "Solo administradores")
 	@PostMapping("/alta-activo")
-	public ResponseEntity<EventoDto> altaEventoActivo(@Valid @RequestBody Evento evento){
+	public ResponseEntity<?> altaEventoActivo(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@Valid @RequestBody Evento evento){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Evento nuevoEventoActivo = eventoService.altaEventoActivo(evento);
 		return ResponseEntity.status(HttpStatus.CREATED).body(EventoDto.convertirAEventoDto(nuevoEventoActivo));
 	}
-	
-	//"Editar un evento existente por su id"
+
 	@PutMapping("/editar/{idEvento}")
-	public ResponseEntity<EventoDto> editarEvento(@PathVariable int idEvento, @Valid @RequestBody Evento evento){
+	public ResponseEntity<?> editarEvento(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable int idEvento,
+			@Valid @RequestBody Evento evento){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Evento eventoEditado = eventoService.editarEventoPorId(idEvento, evento);
-		
+
 		if (eventoEditado == null) {
 			return ResponseEntity.notFound().build();
 		} else {
 			return ResponseEntity.ok(EventoDto.convertirAEventoDto(eventoEditado));
 		}
 	}
-	
-	//"Poner el estado del evento como cancelado por su id"
+
+	@Operation(summary = "Cancelar un evento por id", description = "Solo administradores")
 	@PutMapping("/cancelar/{idEvento}")
-	public ResponseEntity<EventoDto> ancelarEvento(@PathVariable int idEvento){
+	public ResponseEntity<?> cancelarEvento(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable int idEvento){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Evento eventoCancelado = eventoService.cancelarEvento(idEvento);
-		
+
 		if(eventoCancelado == null) {
 			return ResponseEntity.notFound().build();
 		}else {
 			return ResponseEntity.ok(EventoDto.convertirAEventoDto(eventoCancelado));
-		}	
+		}
 	}
-	
+
+	@Operation(summary = "Listar eventos activos")
 	//Sacar el listado de todos los eventos activos
 	@GetMapping("/por-estado-activo")
 	public ResponseEntity<List<EventoDto>> buscarEventosPorEstadoActivo(){
@@ -232,7 +290,8 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(eventosActivos);
 	}
-	
+
+	@Operation(summary = "Listar eventos destacados")
 	//Obtener todos los eventos destacados
 	@GetMapping("/destacados")
 	public ResponseEntity<List<EventoDto>> buscarEventosDestacados(){
@@ -240,10 +299,10 @@ public class EventoRestController {
 				.stream()
 				.map(EventoDto::convertirAEventoDto)
 				.toList();
-		
+
 		return ResponseEntity.ok(eventosDestacados);
 	}
-	
+
 	//Sacar el listado de todos los eventos terminados
 	@GetMapping("/terminados")
 	public ResponseEntity<List<EventoDto>> buscarEventosPorEstadoTerminado(){
@@ -253,7 +312,7 @@ public class EventoRestController {
 				.toList();
 		return ResponseEntity.ok(eventosTerminados);
 	}
-	
+
 	//Sacar el listado de todos los eventos cancelados
 	@GetMapping("/cancelados")
 	public ResponseEntity<List<EventoDto>> buscarEventosPorEstadoCancelado(){

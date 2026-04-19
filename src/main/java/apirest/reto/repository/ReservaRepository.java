@@ -37,7 +37,14 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer>{
 			+ "where r.evento.estado = ?1 "
 			+ "group by r.usuario.username")
 	List<Object[]> calcularCantidadTotalReservadaPorUsuarioEnEventosActivos(Estado estado);
-	
-	
+
+	// Suma de entradas ya reservadas para un evento concreto (para comprobar el aforo)
+	@Query("select coalesce(sum(r.cantidad), 0) from Reserva r where r.evento.idEvento = ?1")
+	int sumarCantidadPorEvento(int idEvento);
+
+	// Suma de entradas que tiene un usuario en un evento concreto (maximo 10 por reserva)
+	@Query("select coalesce(sum(r.cantidad), 0) from Reserva r where r.evento.idEvento = ?1 and r.usuario.username = ?2")
+	int sumarCantidadPorEventoYUsuario(int idEvento, String username);
+
 }
  

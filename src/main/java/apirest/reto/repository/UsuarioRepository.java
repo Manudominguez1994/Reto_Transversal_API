@@ -8,14 +8,17 @@ import org.springframework.data.jpa.repository.Query;
 import apirest.reto.model.entity.Usuario;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, String>{
-	
-	//“Buscar usuarios cuyo email contenga un texto específico”
+
+	// Para el login: buscamos por email exacto
+	Usuario findByEmail(String email);
+
+	//"Buscar usuarios cuyo email contenga un texto específico"
 	List<Usuario> findByEmailContaining(String texto);
 	
-	//“usuarios que se registraron después de una fecha”
+	//"usuarios que se registraron después de una fecha"
 	List<Usuario> findByFechaRegistroAfter(LocalDate fechaRegistro);
 	
-	//“usuarios que hayan realizado alguna reserva”
+	//"usuarios que hayan realizado alguna reserva"
 	@Query("select distinct r.usuario from Reserva r")
 	List<Usuario> buscarUsuariosConAlgunaReserva();
 	

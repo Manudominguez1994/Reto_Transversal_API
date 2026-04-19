@@ -9,12 +9,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import apirest.reto.config.JwtUtil;
 import apirest.reto.model.dto.PerfilDto;
 import apirest.reto.model.entity.Perfil;
 import apirest.reto.service.PerfilService;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/perfiles")
@@ -22,7 +24,17 @@ public class PerfilRestController {
 	
 	@Autowired
 	private PerfilService perfilService;
-	
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	private boolean esAdmin(String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) return false;
+		String token = authHeader.substring(7);
+		if (!jwtUtil.esTokenValido(token)) return false;
+		return "ROLE_ADMON".equals(jwtUtil.obtenerRol(token));
+	}
+
 	@GetMapping("")
 	public ResponseEntity<List<PerfilDto>> findAll() {
 		List<PerfilDto> perfiles = perfilService.findAll()
@@ -44,7 +56,14 @@ public class PerfilRestController {
 	}
 	
 	@PostMapping("/alta")
-	public ResponseEntity<PerfilDto> insertOne(@RequestBody Perfil perfil){
+	public ResponseEntity<?> insertOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@RequestBody Perfil perfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Perfil nuevoPerfil = perfilService.insertOne(perfil);
 		
 		if(nuevoPerfil == null) {
@@ -55,7 +74,14 @@ public class PerfilRestController {
 	}
 	
 	@PutMapping("/actualizar")
-	public ResponseEntity<PerfilDto> updateOne(@RequestBody Perfil perfil){
+	public ResponseEntity<?> updateOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@RequestBody Perfil perfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		Perfil perfilActualizado = perfilService.updateOne(perfil);
 		
 		if(perfilActualizado == null) {
@@ -66,7 +92,14 @@ public class PerfilRestController {
 	}
 	
 	@DeleteMapping("/eliminar/{idPerfil}")
-	public ResponseEntity<Void> deleteOne(@PathVariable int idPerfil){
+	public ResponseEntity<?> deleteOne(
+			@RequestHeader(value = "Authorization", required = false) String authHeader,
+			@PathVariable int idPerfil){
+
+		if (!esAdmin(authHeader)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+
 		int resultado = perfilService.deleteById(idPerfil);
 		
 		if(resultado == 1) {
