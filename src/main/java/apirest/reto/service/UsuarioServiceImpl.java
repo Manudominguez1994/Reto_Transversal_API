@@ -3,6 +3,7 @@ package apirest.reto.service;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import apirest.reto.model.entity.Perfil;
 import apirest.reto.model.entity.Usuario;
@@ -22,6 +23,9 @@ public class UsuarioServiceImpl implements UsuarioService{
 
 	@Autowired
 	private UsuarioPerfilRepository usuarioPerfilRepository;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
 
 	@Override
 	public List<Usuario> findAll() {
@@ -93,6 +97,7 @@ public class UsuarioServiceImpl implements UsuarioService{
 
 		usuario.setFechaRegistro(LocalDate.now());
 		usuario.setEnabled(1);
+		usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
 		Usuario guardado = usuarioRepository.save(usuario);
 

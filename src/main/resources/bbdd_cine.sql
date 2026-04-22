@@ -98,15 +98,15 @@ INSERT INTO perfiles (id_perfil, nombre) VALUES
 
 -- ----------------------------------------------------------
 -- Usuarios
--- (password en texto plano, en produccion se cifrara con BCrypt)
+-- Contraseña de todos los usuarios: 1234 (cifrada con BCrypt strength=10)
 -- ----------------------------------------------------------
 INSERT INTO usuarios (username, password, email, nombre, apellidos, direccion, enabled, fecha_registro) VALUES
-('manuel',   '1234', 'manuel@cine.com',   'Manuel', 'Garcia Lopez',    'Calle Mayor 1, Madrid',      1, '2024-09-01'),
-('santi',    '1234', 'santi@cine.com',    'Santi',  'Martinez Ruiz',   'Avenida Central 5, Madrid',  1, '2024-09-01'),
-('felix',    '1234', 'felix@cine.com',    'Felix',  'Sanchez Torres',  'Plaza Espana 3, Madrid',     1, '2024-09-01'),
-('ana_g',    '1234', 'ana@email.com',     'Ana',    'Gomez Perez',     'Calle Nueva 10, Madrid',     1, '2024-10-15'),
-('carlos_l', '1234', 'carlos@email.com',  'Carlos', 'Lopez Fernandez', 'Calle Vieja 22, Madrid',     1, '2024-11-20'),
-('lucia_m',  '1234', 'lucia@email.com',   'Lucia',  'Moreno Diaz',     'Avenida del Sol 7, Madrid',  1, '2025-01-10');
+('manuel',   '$2a$10$EPzX9Kd3ObmYChnivTThturQH.u7eBiVQm.DRlzgUdwVgqshKt9GK', 'manuel@cine.com',   'Manuel', 'Garcia Lopez',    'Calle Mayor 1, Madrid',      1, '2024-09-01'),
+('santi',    '$2a$10$6qQ.01ZWiOI2NVNQX4C2h.yfaIALBkbNjERVQg.edYlFDF8PB/SGG', 'santi@cine.com',    'Santi',  'Martinez Ruiz',   'Avenida Central 5, Madrid',  1, '2024-09-01'),
+('felix',    '$2a$10$wPr59m/mhdmw4vi0NVPPtOOWuA11Ndub0WPaOhDuuN7O0oNzzk.Hi', 'felix@cine.com',    'Felix',  'Sanchez Torres',  'Plaza Espana 3, Madrid',     1, '2024-09-01'),
+('ana_g',    '$2a$10$2sGUFwL.p.zypr3.BxyYf.RIRXYCkxUC6tqy5lwwFxUIqTa3EAydW', 'ana@email.com',     'Ana',    'Gomez Perez',     'Calle Nueva 10, Madrid',     1, '2024-10-15'),
+('carlos_l', '$2a$10$vcST2e/QnnT6d5ryO.qXEOgP8ySH4M46HVaUnPN7a1Q4j58DLPRFG', 'carlos@email.com',  'Carlos', 'Lopez Fernandez', 'Calle Vieja 22, Madrid',     1, '2024-11-20'),
+('lucia_m',  '$2a$10$YcxpGFehpZ08M7UHEDy90O5gBbeyMT5FEsYqhAAUy6MRX31qOQdO.', 'lucia@email.com',   'Lucia',  'Moreno Diaz',     'Avenida del Sol 7, Madrid',  1, '2025-01-10');
 
 -- ----------------------------------------------------------
 -- Asignacion de perfiles a usuarios
@@ -189,3 +189,16 @@ INSERT INTO reservas (id_evento, username, precio_venta, observaciones, cantidad
 (4, 'lucia_m',  7.50, NULL,                        2),
 (9, 'ana_g',    9.50, 'Prefiero asientos delante', 2),
 (1, 'lucia_m',  8.50, NULL,                        1);
+
+
+-- ==========================================================
+-- MIGRACION DE CONTRASENAS A BCRYPT
+-- Ejecutar este bloque si la base de datos ya existe con
+-- contraseñas en texto plano. Contraseña original: 1234
+-- ==========================================================
+-- UPDATE usuarios SET password = '$2a$10$EPzX9Kd3ObmYChnivTThturQH.u7eBiVQm.DRlzgUdwVgqshKt9GK' WHERE username = 'manuel';
+-- UPDATE usuarios SET password = '$2a$10$6qQ.01ZWiOI2NVNQX4C2h.yfaIALBkbNjERVQg.edYlFDF8PB/SGG' WHERE username = 'santi';
+-- UPDATE usuarios SET password = '$2a$10$wPr59m/mhdmw4vi0NVPPtOOWuA11Ndub0WPaOhDuuN7O0oNzzk.Hi' WHERE username = 'felix';
+-- UPDATE usuarios SET password = '$2a$10$2sGUFwL.p.zypr3.BxyYf.RIRXYCkxUC6tqy5lwwFxUIqTa3EAydW' WHERE username = 'ana_g';
+-- UPDATE usuarios SET password = '$2a$10$vcST2e/QnnT6d5ryO.qXEOgP8ySH4M46HVaUnPN7a1Q4j58DLPRFG' WHERE username = 'carlos_l';
+-- UPDATE usuarios SET password = '$2a$10$YcxpGFehpZ08M7UHEDy90O5gBbeyMT5FEsYqhAAUy6MRX31qOQdO.' WHERE username = 'lucia_m';

@@ -96,6 +96,12 @@
 			<version>0.12.3</version>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- BCrypt sin necesidad de Spring Security completo -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

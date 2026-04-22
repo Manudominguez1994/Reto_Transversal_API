@@ -3,6 +3,7 @@ package apirest.reto.restcontroller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,18 +33,20 @@ public class AuthRestController {
 	@Autowired
 	private JwtUtil jwtUtil;
 
-	@Operation(summary = "Iniciar sesión", description = "Devuelve un token JWT si el email y password son correctos")
-	// login por email y password, devuelve un token JWT
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+
+	@Operation(summary = "Iniciar sesión", description = "Devuelve un token JWT si el username y password son correctos")
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto) {
 
-		Usuario usuario = usuarioRepository.findByEmail(loginDto.getEmail());
+		Usuario usuario = usuarioRepository.findById(loginDto.getUsername()).orElse(null);
 
 		if (usuario == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 
-		if (!usuario.getPassword().equals(loginDto.getPassword())) {
+		if (!passwordEncoder.matches(loginDto.getPassword(), usuario.getPassword())) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 
@@ -51,7 +54,6 @@ public class AuthRestController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 
-		// sacamos el rol del usuario para meterlo en el token
 		UsuarioPerfil up = upRepository.findFirstByUsuario_Username(usuario.getUsername());
 		String rol = up != null ? up.getPerfil().getNombre() : "ROLE_CLIENTE";
 
