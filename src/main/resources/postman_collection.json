@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "API Cine - Reto Transversal",
-    "description": "Coleccion de pruebas para la API del reto transversal. Hacer login primero y guardar el token.",
+    "description": "Coleccion de pruebas para la API del reto transversal. Preparada para cualquier PC cambiando la variable base_url. Hacer login primero y guardar el token.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,6 +12,34 @@
     {
       "key": "token",
       "value": "pegar_aqui_el_token_del_login"
+    },
+    {
+      "key": "admin_email",
+      "value": "manuel@cine.com"
+    },
+    {
+      "key": "admin_password",
+      "value": "1234"
+    },
+    {
+      "key": "cliente_username",
+      "value": "ana_g"
+    },
+    {
+      "key": "cliente_email",
+      "value": "ana@cine.com"
+    },
+    {
+      "key": "cliente_password",
+      "value": "1234"
+    },
+    {
+      "key": "id_evento_prueba",
+      "value": "2"
+    },
+    {
+      "key": "id_reserva_prueba",
+      "value": "1"
     }
   ],
   "item": [
@@ -28,7 +56,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"manuel@cine.com\",\n  \"password\": \"1234\"\n}"
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
             },
             "description": "Devuelve token, username y rol. Copiar el token y pegarlo en la variable 'token'."
           }
@@ -43,7 +71,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"ana@cine.com\",\n  \"password\": \"1234\"\n}"
+              "raw": "{\n  \"email\": \"{{cliente_email}}\",\n  \"password\": \"{{cliente_password}}\"\n}"
             }
           }
         },
@@ -312,9 +340,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=2&observaciones=Butacas en el centro",
+              "raw": "{{base_url}}/reservas/reservar/{{id_evento_prueba}}?username={{cliente_username}}&cantidad=2&observaciones=Butacas en el centro",
               "query": [
-                { "key": "username", "value": "ana_g" },
+                { "key": "username", "value": "{{cliente_username}}" },
                 { "key": "cantidad", "value": "2" },
                 { "key": "observaciones", "value": "Butacas en el centro" }
               ]
@@ -330,9 +358,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=2",
+              "raw": "{{base_url}}/reservas/reservar/{{id_evento_prueba}}?username={{cliente_username}}&cantidad=2",
               "query": [
-                { "key": "username", "value": "ana_g" },
+                { "key": "username", "value": "{{cliente_username}}" },
                 { "key": "cantidad", "value": "2" }
               ]
             },
@@ -344,9 +372,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/reservas/reservar/2?username=ana_g&cantidad=15",
+              "raw": "{{base_url}}/reservas/reservar/{{id_evento_prueba}}?username={{cliente_username}}&cantidad=15",
               "query": [
-                { "key": "username", "value": "ana_g" },
+                { "key": "username", "value": "{{cliente_username}}" },
                 { "key": "cantidad", "value": "15" }
               ]
             },
@@ -360,7 +388,7 @@
           "name": "Cancelar reserva (logado)",
           "request": {
             "method": "DELETE",
-            "url": "{{base_url}}/reservas/cancelar/1",
+            "url": "{{base_url}}/reservas/cancelar/{{id_reserva_prueba}}",
             "header": [
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
@@ -371,7 +399,7 @@
           "name": "Cancelar reserva sin token (da 401)",
           "request": {
             "method": "DELETE",
-            "url": "{{base_url}}/reservas/cancelar/1",
+            "url": "{{base_url}}/reservas/cancelar/{{id_reserva_prueba}}",
             "description": "Sin token debe devolver 401"
           }
         }
